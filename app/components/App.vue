@@ -1,6 +1,6 @@
 <template>
   <Page>
-    <ActionBar title="Devices">
+    <ActionBar :title="connection ? 'Connected to ' + connection.localName : 'Devices'">
       <ActionItem
         @tap="disconnect(connection)"
         v-show="connection"
@@ -16,19 +16,20 @@
         android.systemIcon="presence_offline"
       />
     </ActionBar>
-
-    <PeripheralList :services="services" @peripheralTap="onPeripheralTap" @error="error = $event"/>
-
+    <StackLayout>
+      <PeripheralList v-show="!connection" :services="services" @peripheralTap="onPeripheralTap" @error="error = $event"/>
+      <DeviceControl v-show="connection" :device="connection" @error="error = $event" />
+    </StackLayout>
   </Page>
 </template>
 
 <script>
 import PeripheralList from './PeripheralList'
-import _find from 'lodash/find'
+import DeviceControl from './DeviceControl'
 import { Bluetooth } from "nativescript-bluetooth"
+import { SERVICE_UUID } from '../config'
 
 const bluetooth = new Bluetooth()
-const SERVICE_UUID = '7b183224-9168-443e-a927-7aeea07e8105'
 
 export default {
   name: 'App',
@@ -36,7 +37,8 @@ export default {
     bluetooth
   },
   components: {
-    PeripheralList
+    PeripheralList,
+    DeviceControl
   },
   data() {
     return {
@@ -70,6 +72,9 @@ export default {
         UUID: ph.UUID,
         onConnected: (peripheral) => {
           this.connection = peripheral
+        },
+        onDisconnected: () => {
+          this.connection = null
         }
       })
     }
