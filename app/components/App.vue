@@ -1,75 +1,92 @@
 <template>
   <Page>
-    <ActionBar title="Welcome to NativeScript-Vue!"/>
-    <GridLayout columns="*" rows="*">
-      <Label class="message" text="Devices discovered" col="0" row="0"/>
-    </GridLayout>
-    <ListView for="item in peripherals">
-      <v-template>
-        <!-- Shows the list item label in the default color and style. -->
-        <Label :text="item.UUID" />
-      </v-template>
-    </ListView>
+    <ActionBar title="Devices">
+      <ActionItem
+        @tap="disconnect(connection)"
+        v-show="connection"
+        text="disconnect"
+        ios.systemIcon="2"
+        ios.position="right"
+        android.systemIcon="presence_online"
+      />
+      <ActionItem
+        v-show="!connection"
+        ios.systemIcon="3"
+        ios.position="right"
+        android.systemIcon="presence_offline"
+      />
+    </ActionBar>
+
+    <PeripheralList :services="services" @peripheralTap="onPeripheralTap" @error="error = $event"/>
+
   </Page>
 </template>
 
 <script>
+import PeripheralList from './PeripheralList'
+import _find from 'lodash/find'
 import { Bluetooth } from "nativescript-bluetooth"
 
 const bluetooth = new Bluetooth()
-
+const SERVICE_UUID = '7b183224-9168-443e-a927-7aeea07e8105'
 
 export default {
+  name: 'App',
+  provide: {
+    bluetooth
+  },
+  components: {
+    PeripheralList
+  },
   data() {
     return {
-      msg: 'Hello World!',
-      hasBluetooth: false,
-      scanning: false,
+      services: [SERVICE_UUID],
       error: null,
-      peripherals: []
+      connection: null
     }
   },
-  async mounted(){
-    this.hasBluetooth = await bluetooth.isBluetoothEnabled()
-
-    if (this.hasBluetooth){
-      this.scan()
-    }
+  watch: {
   },
   methods: {
-    scan(){
-      this.peripherals = []
-      this.scanning = true
-      bluetooth.startScanning({
-        serviceUUIDs: [],
-        seconds: 4,
-        onDiscovered: (peripheral) => {
-          this.addDiscovered(peripheral)
-        },
-        skipPermissionCheck: false,
+    async onPeripheralTap(ph){
+      if ( this.connection ){
+        await this.disconnect(this.connection.UUID)
+      }
+
+      await this.connect( ph )
+    },
+    disconnect(ph){
+      return bluetooth.disconnect({
+        UUID: ph.UUID
       }).then(() => {
-        this.scanning = false
+        this.connection = null
+        // success
       }, (err) => {
         this.error = err
       })
     },
-    addDiscovered(peripheral){
-      this.peripherals.push(peripheral)
+    async connect(ph){
+      bluetooth.connect({
+        UUID: ph.UUID,
+        onConnected: (peripheral) => {
+          this.connection = peripheral
+        }
+      })
     }
   }
 }
 </script>
 
 <style scoped>
-    ActionBar {
-        background-color: #53ba82;
-        color: #ffffff;
-    }
+  ActionBar {
+    background-color: #53ba82;
+    color: #ffffff;
+  }
 
-    .message {
-        vertical-align: center;
-        text-align: center;
-        font-size: 20;
-        color: #333333;
-    }
+  .message {
+    vertical-align: center;
+    text-align: center;
+    font-size: 20;
+    color: #333333;
+  }
 </style>
