@@ -19,7 +19,7 @@
     "@nstudio/nativescript-pulltorefresh": "^2.0.0",
     "@vue/devtools": "^5.3.3",
     "lodash": "^4.17.15",
-    "nativescript-bluetooth": "^3.0.0-beta.10",
+    "nativescript-bluetooth": "^2.0.0-beta.27",
     "nativescript-socketio": "^3.3.1",
     "nativescript-toasty": "^3.0.0-alpha.2",
     "nativescript-vue": "^2.6.1",

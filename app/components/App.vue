@@ -47,17 +47,23 @@ export default {
       connection: null
     }
   },
+  beforeDestroy(){
+    if (this.connection){
+      this.disconnect(this.connection)
+    }
+  },
   watch: {
   },
   methods: {
     async onPeripheralTap(ph){
       if ( this.connection ){
-        await this.disconnect(this.connection.UUID)
+        await this.disconnect(this.connection)
       }
 
       await this.connect( ph )
     },
     disconnect(ph){
+      if (!ph){ return }
       return bluetooth.disconnect({
         UUID: ph.UUID
       }).then(() => {
