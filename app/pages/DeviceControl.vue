@@ -1,12 +1,24 @@
 <template>
   <Page>
     <ActionBar :title="`Connected to ${deviceName}`" />
-    <StackLayout>
+    <StackLayout class="main">
       <Button text="Refresh" @tap="fetchData" />
 
-      <Label :text="`Memory used: ${memoryUsage} blocks`" />
-      <Label :text="`Writing to Flash?: ${flashWriteText}`" />
       <Label :text="`Uptime: ${uptimeText}`" />
+
+      <Label :text="`Memory used: ${memoryUsage} blocks`" />
+
+      <StackLayout orientation="horizontal">
+        <Label verticalAlignment="center" :text="`Writing to Flash?: ${flashWriteText}`" />
+        <Switch :checked="flashWrite === 1" @checkedChange="toggleFlash"/>
+      </StackLayout>
+
+      <FlexboxLayout class="buttons" orientation="horizontal">
+        <Button flexGrow="1" text="Record Primary" @tap="recordPrimary" />
+        <Button flexGrow="1" text="Record Secondary" @tap="recordSecondary" />
+      </FlexboxLayout>
+      <ActivityIndicator :busy="busy" />
+      <Label v-show="msg" class="msg" :text="msg" />
 
       <Button class="btn-disconnect" text="Disconnect" @tap="disconnect" />
 
@@ -34,11 +46,13 @@ export default {
 
   data() {
     return {
+      busy: false,
       connected: false,
       deviceName: '',
       memoryUsage: 'unknown',
       flashWrite: 'unknown',
-      uptime: 0
+      uptime: 0,
+      msg: null
     }
   },
 
@@ -77,6 +91,13 @@ export default {
   },
 
   methods: {
+    feedback(msg){
+      this.msg = msg
+      setTimeout(() => {
+        this.msg = null
+      }, 2000)
+    },
+
     async disconnect(){
       await this.$dongle.disconnect()
       this.$navigateTo(Welcome)
@@ -110,19 +131,60 @@ export default {
       }).catch((err) => {
         this.$emit('error', err)
       })
+    },
+
+    toggleFlash(){
+      let command = this.flashWrite === 1 ? 'stopWritingToFlash' : 'startWritingToFlash'
+      return this.$dongle.sendCommand(command).then(() => {
+        return this.checkFlashUsage()
+      }).catch((err) => {
+        this.$emit('error', err)
+      })
+    },
+
+    recordPrimary(){
+      this.busy = true
+      return this.$dongle.sendCommand('recordPrimaryEncounterEvent').then(() => {
+        this.feedback('Recorded primary event')
+      }).catch((err) => {
+        this.$emit('error', err)
+      }).finally(() => {
+        this.busy = false
+      })
+    },
+
+    recordSecondary(){
+      this.busy = true
+      return this.$dongle.sendCommand('recordSecondaryEncounterEvent').then(() => {
+        this.feedback('Recorded secondary event')
+      }).catch((err) => {
+        this.$emit('error', err)
+      }).finally(() => {
+        this.busy = false
+      })
     }
   }
 }
 </script>
 
 <style scoped>
-StackLayout {
+.main {
   margin: 20 0;
+  padding: 0;
+}
+Switch {
+  margin: 0;
   padding: 0;
 }
 Label {
   padding: 4 20;
   font-size: 20;
+}
+.buttons {
+  margin-top: 20;
+}
+.msg {
+  color: rgb(85, 120, 85);
 }
 .btn-disconnect {
   margin-top: 80;

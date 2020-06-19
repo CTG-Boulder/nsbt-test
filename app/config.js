@@ -13,10 +13,12 @@ function toHex(ch){
 export const COMMANDS = Object.freeze({
   isWritingToFlash: {
     value: toHex('I'),
+    notify: true,
     returnType: Uint8Array
   },
   getUptime: {
     value: toHex('A'),
+    notify: true,
     returnType: Uint32Array
   },
   startWritingToFlash: {

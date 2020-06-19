@@ -104,9 +104,8 @@ function Controller(){
         clearTimeout(timeout)
         notifyCallback = noop
 
-        console.log(res.value.byteLength)
         try {
-          let data = res.value ?
+          let data = res && res.value ?
             new command.returnType(res.value) :
             []
           resolve(data)
@@ -115,12 +114,19 @@ function Controller(){
         }
       }
 
-      notifyCallback = done
+      if (command.notify){
+        notifyCallback = done
+      }
+
       bluetooth.write({
         peripheralUUID: connection.UUID,
         serviceUUID: SERVICE_UUID,
         characteristicUUID: CHARACTERISTICS.rw,
         value: command.value
+      }).then(res => {
+        if (!command.notify){
+          done(res)
+        }
       }).catch(err => {
         notifyCallback = noop
         reject(err)
