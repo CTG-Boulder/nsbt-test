@@ -4,6 +4,9 @@
   <Button text="Refresh Memory Usage" @tap="getMemoryUsage" />
   <Label :text="`Writing to Flash?: ${flashWriteText}`" />
   <Button text="Check Flash" @tap="checkFlashUsage" />
+
+  <Label :text="`Uptime?: ${uptime[0]} ${uptime[1]}`" />
+  <Button text="Get uptime" @tap="getUptime" />
   <!-- <HtmlView :html="`<pre>${JSON.stringify(memoryUsage, null, 4)}</pre>`" /> -->
 </StackLayout>
 </template>
@@ -22,7 +25,8 @@ export default {
     return {
       subscribed: false,
       memoryUsage: 'unknown',
-      flashWrite: 'unknown'
+      flashWrite: 'unknown',
+      uptime: 0
     }
   },
 
@@ -78,6 +82,14 @@ export default {
       })
     },
 
+    getUptime(){
+      this.sendCommand(COMMANDS.getUptime).then((used) => {
+        this.uptime = [used[0], used[1]]
+      }).catch((err) => {
+        this.$emit('error', err)
+      })
+    },
+
     sendCommand(command){
       return new Promise((resolve, reject) => {
         let timeout = setTimeout(() => {
@@ -87,7 +99,7 @@ export default {
 
         function done(e){
           clearTimeout(timeout)
-          let data = new Uint8Array(e.value)
+          let data = new command.returnType(e.value)
           resolve(data)
         }
 
