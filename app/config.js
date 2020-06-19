@@ -26,5 +26,13 @@ export const COMMANDS = Object.freeze({
   stopWritingToFlash: {
     value: toHex('s'),
     returnType: Uint8Array
+  },
+  recordPrimaryEncounterEvent: {
+    value: toHex('M'),
+    returnType: Uint8Array
+  },
+  recordSecondaryEncounterEvent: {
+    value: toHex('U'),
+    returnType: Uint8Array
   }
 })

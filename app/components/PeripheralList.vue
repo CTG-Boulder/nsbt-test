@@ -5,7 +5,7 @@
     <ListView ref="phList" for="item in peripherals"  @itemTap="onPeripheralTap">
       <v-template>
           <!-- Shows the list item label in the default color and style. -->
-          <Label :text="item.UUID + ' | ' + item.localName" />
+          <Label :text="`${item.localName} (${item.UUID})`" />
       </v-template>
     </ListView>
   </PullToRefresh>
@@ -16,9 +16,9 @@ import _find from 'lodash/find'
 
 export default {
   name: 'PeripheralList',
-  inject: [ 'bluetooth' ],
   props: {
-    services: Array
+    services: Array,
+    filterBy: Function
   },
   data() {
     return {
@@ -27,7 +27,7 @@ export default {
     }
   },
   async mounted(){
-    let hasBluetooth = await this.bluetooth.isBluetoothEnabled()
+    let hasBluetooth = await this.$bluetooth.isBluetoothEnabled()
 
     if (hasBluetooth){
       this.scan()
@@ -45,8 +45,8 @@ export default {
     },
     scan(){
       this.peripherals = []
-      this.bluetooth.startScanning({
-        serviceUUIDs: this.services,
+      this.$bluetooth.startScanning({
+        filters: this.services.map(serviceUUID => ({ serviceUUID })),
         seconds: 4,
         onDiscovered: (peripheral) => {
           this.addDiscovered(peripheral)

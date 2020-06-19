@@ -26,63 +26,22 @@
 <script>
 import PeripheralList from './PeripheralList'
 import DeviceControl from './DeviceControl'
-import { Bluetooth } from "nativescript-bluetooth"
-import { SERVICE_UUID } from '../config'
-
-const bluetooth = new Bluetooth()
 
 export default {
   name: 'App',
-  provide: {
-    bluetooth
-  },
   components: {
     PeripheralList,
     DeviceControl
   },
   data() {
     return {
-      services: [SERVICE_UUID],
-      error: null,
-      connection: null
-    }
-  },
-  beforeDestroy(){
-    if (this.connection){
-      this.disconnect(this.connection)
     }
   },
   watch: {
   },
   methods: {
     async onPeripheralTap(ph){
-      if ( this.connection ){
-        await this.disconnect(this.connection)
-      }
-
-      await this.connect( ph )
-    },
-    disconnect(ph){
-      if (!ph){ return }
-      return bluetooth.disconnect({
-        UUID: ph.UUID
-      }).then(() => {
-        this.connection = null
-        // success
-      }, (err) => {
-        this.error = err
-      })
-    },
-    async connect(ph){
-      bluetooth.connect({
-        UUID: ph.UUID,
-        onConnected: (peripheral) => {
-          this.connection = peripheral
-        },
-        onDisconnected: () => {
-          this.connection = null
-        }
-      })
+      await this.$dongle.connect( ph )
     }
   }
 }
