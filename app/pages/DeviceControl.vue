@@ -13,7 +13,7 @@
         <Switch :checked="flashWrite === 1" @checkedChange="toggleFlash"/>
       </StackLayout>
 
-      <FlexboxLayout class="buttons" orientation="horizontal">
+      <FlexboxLayout v-show="flashWrite === 1" class="buttons" orientation="horizontal">
         <Button flexGrow="1" text="Record Primary" @tap="recordPrimary" />
         <Button flexGrow="1" text="Record Secondary" @tap="recordSecondary" />
       </FlexboxLayout>
@@ -76,6 +76,12 @@ export default {
     })
 
     this.fetchData()
+
+    this.$onBtStatusChange((enabled) => {
+      if (!enabled){
+        this.disconnect()
+      }
+    })
   },
 
   computed: {

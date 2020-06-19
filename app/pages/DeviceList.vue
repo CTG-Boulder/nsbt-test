@@ -13,6 +13,7 @@
 
 <script>
 import { SERVICE_UUID } from '../config'
+import Welcome from './Welcome'
 import PeripheralList from '../components/PeripheralList'
 import DeviceControl from './DeviceControl'
 
@@ -26,6 +27,13 @@ export default {
       busy: false,
       services: [SERVICE_UUID]
     }
+  },
+  mounted(){
+    this.$onBtStatusChange((enabled) => {
+      if (!enabled){
+        this.$navigateTo(Welcome)
+      }
+    })
   },
   methods: {
     async onPeripheralTap(ph){
