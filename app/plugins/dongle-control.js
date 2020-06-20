@@ -135,11 +135,60 @@ function Controller(){
     })
   }
 
+  async function fetchData(opts = { interrupt: false }){
+
+    const chunks = await getMemoryUsage()
+    const expectedLength = chunks * 32
+    let iterations = 0
+    let result = Buffer.from([])
+
+    function nextBlock(){
+      return new Promise((resolve, reject) => {
+        notifyCallback = (res) => {
+          console.log('got block', iterations)
+          result = Buffer.concat([result, res.value])
+          notifyCallback = noop
+          resolve()
+        }
+
+        bluetooth.write({
+          peripheralUUID: connection.UUID,
+          serviceUUID: SERVICE_UUID,
+          characteristicUUID: CHARACTERISTICS.data,
+          value: Uint32Array.from([iterations])
+        }).catch(reject)
+      })
+    }
+
+    try {
+      await sendCommand('startDataDownload')
+
+      while(result.byteLength < expectedLength){
+        if (opts.interrupt){
+          throw new Error('Interrupted')
+        }
+        if (iterations > chunks){
+          throw new Error('Received more chunks than expected')
+        }
+        await nextBlock()
+        iterations++
+      }
+
+    } catch (err){
+      throw err
+    } finally {
+      await sendCommand('stopDataDownload')
+    }
+
+    return result
+  }
+
   return {
     connect,
     disconnect,
     getMemoryUsage,
     sendCommand,
+    fetchData,
     getDeviceName: () => connection.localName,
     isConnected: () => !!connection,
     on: pubsub.$on.bind(pubsub),

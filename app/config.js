@@ -36,5 +36,13 @@ export const COMMANDS = Object.freeze({
   recordSecondaryEncounterEvent: {
     value: toHex('U'),
     returnType: Uint8Array
+  },
+  startDataDownload: {
+    value: toHex('f'),
+    returnType: Uint8Array
+  },
+  stopDataDownload: {
+    value: toHex('F'),
+    returnType: Uint8Array
   }
 })

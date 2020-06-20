@@ -22,6 +22,8 @@
 
       <Button class="btn-disconnect" text="Disconnect" @tap="disconnect" />
 
+      <Button text="Save Data File" isEnabled="false" @tap="saveDataFile" />
+
       <!-- <HtmlView :html="`<pre>${JSON.stringify(memoryUsage, null, 4)}</pre>`" /> -->
     </StackLayout>
   </Page>
@@ -29,6 +31,7 @@
 
 <script>
 import Welcome from './Welcome'
+import { saveData } from '../tools/save-to-file'
 
 function msToTime(s) {
   var ms = s % 1000
@@ -82,6 +85,10 @@ export default {
         this.disconnect()
       }
     })
+  },
+
+  beforeDestroy(){
+    this.cancelDataFetch()
   },
 
   computed: {
@@ -168,6 +175,34 @@ export default {
       }).finally(() => {
         this.busy = false
       })
+    },
+
+    cancelDataFetch(){
+      if (this._dataFetchInterrupt){
+        this._dataFetchInterrupt.interrupt = true
+      }
+    },
+
+    async saveDataFile(){
+      this.cancelDataFetch()
+      this._dataFetchInterrupt = { interrupt: false }
+      let data = await this.$dongle.fetchData(this._dataFetchInterrupt)
+      let bytes = Array.create("byte", data.length)
+
+      this.$emit('fetched', data.byteLength)
+      return
+
+      // for (let i = 0; i < data.length; i++){
+      //   bytes[i] = data[i]
+      // }
+      // this.busy = true
+      // return saveData(this.deviceName, bytes).then(text => {
+      //   this.$emit('text', text)
+      // }).catch((err) => {
+      //   this.$emit('error', err)
+      // }).finally(() => {
+      //   this.busy = false
+      // })
     }
   }
 }

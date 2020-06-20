@@ -1,6 +1,4 @@
 import { Bluetooth } from "nativescript-bluetooth"
-import { has } from "lodash"
-
 export const bluetooth = new Bluetooth()
 
 export default {
