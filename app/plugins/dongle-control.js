@@ -139,15 +139,16 @@ function Controller(){
 
     const chunks = await getMemoryUsage()
     const expectedLength = chunks * 32
-    let iterations = 0
+    let blocksReceived = 0
     let result = Buffer.from([])
 
     function nextBlock(){
       return new Promise((resolve, reject) => {
         notifyCallback = (res) => {
-          console.log('got block', iterations)
+          console.log('got block', blocksReceived)
           result = Buffer.concat([result, res.value])
           notifyCallback = noop
+          blocksReceived++
           resolve()
         }
 
@@ -155,8 +156,11 @@ function Controller(){
           peripheralUUID: connection.UUID,
           serviceUUID: SERVICE_UUID,
           characteristicUUID: CHARACTERISTICS.data,
-          value: Uint32Array.from([iterations])
-        }).catch(reject)
+          value: Uint32Array.from([blocksReceived])
+        }).catch(err => {
+          console.dir(err)
+          reject(err)
+        })
       })
     }
 
@@ -167,11 +171,10 @@ function Controller(){
         if (opts.interrupt){
           throw new Error('Interrupted')
         }
-        if (iterations > chunks){
+        if (blocksReceived > chunks){
           throw new Error('Received more chunks than expected')
         }
         await nextBlock()
-        iterations++
       }
 
     } catch (err){
