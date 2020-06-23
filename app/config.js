@@ -7,7 +7,7 @@ export const CHARACTERISTICS = Object.freeze({
 })
 
 function toHex(ch){
-  return Uint8Array.from([ch.charCodeAt(0)])
+  return Uint8Array.of(ch.charCodeAt(0))
 }
 
 export const COMMANDS = Object.freeze({
