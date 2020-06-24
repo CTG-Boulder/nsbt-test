@@ -24,3 +24,16 @@ export function saveData(deviceName, binData){
     })
   })
 }
+
+export function saveTextData(deviceName, text, extension = 'txt') {
+  const name = deviceName + (new Date()).toISOString() + '.' + extension
+  const path = fileSystemModule.path.join(dest, name)
+
+  return permissions.requestPermission([
+    'android.permission.WRITE_EXTERNAL_STORAGE'
+  ], 'Necessary for writing data file').then(() => {
+    const dataFile = fileSystemModule.File.fromPath(path)
+
+    return dataFile.writeText(text)
+  })
+}

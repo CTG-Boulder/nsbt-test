@@ -5,6 +5,27 @@ import { bluetooth } from './bluetooth-service'
 const COMMAND_TIMEOUT = 5000
 const noop = () => {}
 
+function toBtValue(val){
+  if (typeof val === 'number'){
+    let buf = new ArrayBuffer(4)
+    let view = new DataView(buf)
+    view.setUint32(0, val, true)
+    return new Uint8Array(buf)
+  }
+
+  if (typeof val === 'string'){
+    return Uint8Array.of(val.charCodeAt(0))
+  }
+
+  throw new Error('Can not encode value for bluetooth write')
+}
+
+class OutOfOrderException extends Error {
+  constructor(){
+    super('Received block out of order')
+  }
+}
+
 function Controller(){
   // just using vue for events
   const pubsub = new Vue()
@@ -41,7 +62,7 @@ function Controller(){
     })
 
     subscribe()
-    pubsub.$emit('connected')
+    pubsub.$emit('connected', connection)
   }
 
   async function subscribe(){
@@ -122,7 +143,7 @@ function Controller(){
         peripheralUUID: connection.UUID,
         serviceUUID: SERVICE_UUID,
         characteristicUUID: CHARACTERISTICS.rw,
-        value: command.value
+        value: toBtValue(command.value)
       }).then(res => {
         if (!command.notify){
           done(res)
@@ -135,30 +156,58 @@ function Controller(){
     })
   }
 
-  async function fetchData(opts = { interrupt: false }){
+  async function fetchData(opts = { interrupt: false, onProgress }){
 
-    const chunks = await getMemoryUsage()
-    const expectedLength = chunks * 32
+    const blocksTotal = await getMemoryUsage()
+    const blockSize = 32
+    const expectedLength = blocksTotal * blockSize
+
     let blocksReceived = 0
-    let result = Buffer.from([])
+    let bytesReceived = 0
+    let expectedMTUSize = 0
+    let result = new Uint8Array(expectedLength)
+
+    console.log('expecting bytes', expectedLength)
 
     function nextBlock(){
       return new Promise((resolve, reject) => {
         notifyCallback = (res) => {
-          console.log('got block', blocksReceived)
-          result = Buffer.concat([result, res.value])
+          let blockNumber = new Uint32Array(res.value, 0, 1)[0]
+          let block = new Uint8Array(res.value, 4)
+
+          // console.log(blockNumber, block.byteLength, block)
+
+          if (block.byteLength === 0){
+            // drop value
+            blocksReceived++
+            return resolve(false)
+          }
+
+          if (blockNumber !== blocksReceived){
+            return reject(new OutOfOrderException())
+          }
+
+          if (!expectedMTUSize){
+            expectedMTUSize = block.byteLength
+          }
+
+          // if (block.byteLength !== expectedMTUSize){
+          //   return reject(new Error('Incorrect block size received'))
+          // }
+
+          result.set(block, bytesReceived)
           notifyCallback = noop
+          bytesReceived += block.byteLength
           blocksReceived++
-          resolve()
+          resolve(true)
         }
 
-        bluetooth.write({
+        bluetooth.writeWithoutResponse({
           peripheralUUID: connection.UUID,
           serviceUUID: SERVICE_UUID,
-          characteristicUUID: CHARACTERISTICS.data,
-          value: Uint32Array.from([blocksReceived])
+          characteristicUUID: CHARACTERISTICS.data_req,
+          value: toBtValue(blocksReceived)
         }).catch(err => {
-          console.dir(err)
           reject(err)
         })
       })
@@ -167,14 +216,23 @@ function Controller(){
     try {
       await sendCommand('startDataDownload')
 
-      while(result.byteLength < expectedLength){
+      while(bytesReceived < expectedLength){
         if (opts.interrupt){
           throw new Error('Interrupted')
         }
-        if (blocksReceived > chunks){
-          throw new Error('Received more chunks than expected')
+
+        try {
+          await nextBlock()
+        } catch (e){
+          throw e
+          // if it's out of order block, try again
+          // if (!(e instanceof OutOfOrderException)){
+          //   throw e
+          // }
         }
-        await nextBlock()
+        if (opts.onProgress){
+          opts.onProgress(bytesReceived, expectedLength)
+        }
       }
 
     } catch (err){

@@ -22,7 +22,8 @@
 
       <Button class="btn-disconnect" text="Disconnect" @tap="disconnect" />
 
-      <Button text="Save Data File" isEnabled="false" @tap="saveDataFile" />
+      <Button text="Save Data File" isEnabled="true" @tap="saveDataFile" />
+      <Progress v-show="progress" :value="progress" />
 
       <!-- <HtmlView :html="`<pre>${JSON.stringify(memoryUsage, null, 4)}</pre>`" /> -->
     </StackLayout>
@@ -31,7 +32,8 @@
 
 <script>
 import Welcome from './Welcome'
-import { saveData } from '../tools/save-to-file'
+import { saveTextData } from '../tools/save-to-file'
+import { bytesToCsv } from '../tools/bytes-to-csv'
 
 function msToTime(s) {
   var ms = s % 1000
@@ -50,6 +52,7 @@ export default {
   data() {
     return {
       busy: false,
+      progress: 0,
       connected: false,
       deviceName: '',
       memoryUsage: 'unknown',
@@ -112,6 +115,7 @@ export default {
     },
 
     async disconnect(){
+      this.cancelDataFetch()
       await this.$dongle.disconnect()
       this.$navigateTo(Welcome)
     },
@@ -185,24 +189,20 @@ export default {
 
     async saveDataFile(){
       this.cancelDataFetch()
-      this._dataFetchInterrupt = { interrupt: false }
+      this._dataFetchInterrupt = {
+        interrupt: false,
+        onProgress: (received, expected) => {
+          this.progress = received / expected * 100
+        }
+      }
       let data = await this.$dongle.fetchData(this._dataFetchInterrupt)
-      let bytes = Array.create("byte", data.length)
 
-      this.$emit('fetched', data.byteLength)
-      return
-
-      // for (let i = 0; i < data.length; i++){
-      //   bytes[i] = data[i]
-      // }
-      // this.busy = true
-      // return saveData(this.deviceName, bytes).then(text => {
-      //   this.$emit('text', text)
-      // }).catch((err) => {
-      //   this.$emit('error', err)
-      // }).finally(() => {
-      //   this.busy = false
-      // })
+      this.progress = 0
+      return saveTextData(this.deviceName, bytesToCsv(data), 'csv').then(text => {
+        this.$emit('text', text)
+      }).catch((err) => {
+        this.$emit('error', err)
+      })
     }
   }
 }
