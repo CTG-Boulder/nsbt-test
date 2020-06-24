@@ -46,7 +46,7 @@ export default {
       this.$navigateTo(DeviceControl)
     },
     onError(err){
-      console.error(err)
+      this.$handleError(err)
     }
   }
 }

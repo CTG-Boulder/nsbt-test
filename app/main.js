@@ -3,6 +3,7 @@ import Welcome from './pages/Welcome'
 import VueDevtools from 'nativescript-vue-devtools'
 import BluetoothService from './plugins/bluetooth-service'
 import DongleControl from './plugins/dongle-control'
+import ErrorHandler from './plugins/error-handler'
 
 if(TNS_ENV !== 'production') {
   // Change this ip address to your host machine
@@ -11,6 +12,7 @@ if(TNS_ENV !== 'production') {
 
 Vue.use(BluetoothService)
 Vue.use(DongleControl)
+Vue.use(ErrorHandler)
 
 Vue.registerElement(
   'PullToRefresh',

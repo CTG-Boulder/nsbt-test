@@ -20,9 +20,15 @@ function toBtValue(val){
   throw new Error('Can not encode value for bluetooth write')
 }
 
-class OutOfOrderException extends Error {
+export class OutOfOrderException extends Error {
   constructor(){
     super('Received block out of order')
+  }
+}
+
+export class InterruptException extends Error {
+  constructor(){
+    super('Interrupted')
   }
 }
 
@@ -167,10 +173,17 @@ function Controller(){
     let expectedMTUSize = 0
     let result = new Uint8Array(expectedLength)
 
-    console.log('expecting bytes', expectedLength)
+    // console.log('expecting bytes', expectedLength)
 
     function nextBlock(){
       return new Promise((resolve, reject) => {
+        let interval = setInterval(() => {
+          if (opts.interrupt){
+            clearInterval(interval)
+            notifyCallback = noop;
+            reject(new InterruptException())
+          }
+        }, 1000)
         notifyCallback = (res) => {
           let blockNumber = new Uint32Array(res.value, 0, 1)[0]
           let block = new Uint8Array(res.value, 4)
@@ -218,7 +231,7 @@ function Controller(){
 
       while(bytesReceived < expectedLength){
         if (opts.interrupt){
-          throw new Error('Interrupted')
+          throw new InterruptException()
         }
 
         try {

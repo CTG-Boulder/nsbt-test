@@ -7,3 +7,16 @@
 
 // Global SCSS styling
 // @see https://docs.nativescript.org/ui/styling
+
+Button {
+  color: #1b2126;
+  background: #a9d0ec;
+}
+.btn-red {
+  color: #ffeeee;
+  background: #aa0000;
+}
+.btn-green {
+  color: rgb(239, 255, 238);
+  background: #06b555;
+}

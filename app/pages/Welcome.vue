@@ -3,7 +3,7 @@
     <ActionBar title="Welcome" />
     <StackLayout>
       <Label class="bt-warn" v-show="!hasBluetooth" textWrap="true" text="Please enable bluetooth on your device" />
-      <Button v-show="hasBluetooth" class="btn-connect" text="Connect to Encounter Device" @tap="toDeviceList" />
+      <Button v-show="hasBluetooth" class="btn-green" text="Connect to Encounter Device" @tap="toDeviceList" />
     </StackLayout>
   </Page>
 </template>
@@ -39,10 +39,6 @@ export default {
 <style scoped>
 StackLayout {
   padding: 20;
-}
-.btn-connect {
-  color: rgb(239, 255, 238);
-  background: rgb(80, 191, 93);
 }
 .bt-warn {
   font-size: 26;
