@@ -47,7 +47,7 @@ Steps:
 3. Go to Preferences-> Accounts and ensure you have an account with a team and certificate. If not, create one.
 4. Go to the Project settings (side panel, blue icon) then go to Signing & Capabilities
 5. Select a team for your project
-6. Enter the bundle identifier: `encounter-tracing-device-controller`
+6. Enter the bundle identifier: `com.nativescript.EncounterTracingController`
 7. Xcode will prompt you to sign the certificates
 8. Attempt to run the app on your device (select box near play button)
 9. This won't work yet, you need to go to your device, and on your device go to Settings -> General -> Device Management and trust the developer app
