@@ -162,7 +162,29 @@ function Controller(){
     })
   }
 
+  async function setName(name){
+    assertConnection()
+    if (name.length > 8){
+      throw new Error('Name must be less than 8 characters')
+    }
+
+    let value = new Uint8Array(8)
+    for (let i = 0; i < name.length; i++){
+      value[i] = name.charCodeAt(i)
+    }
+
+    await sendCommand('setName')
+
+    await bluetooth.writeWithoutResponse({
+      peripheralUUID: connection.UUID,
+      serviceUUID: SERVICE_UUID,
+      characteristicUUID: CHARACTERISTICS.data,
+      value: value
+    })
+  }
+
   async function fetchData(opts = { interrupt: false, onProgress }){
+    assertConnection()
 
     const blocksTotal = await getMemoryUsage()
     const blockSize = 32
@@ -262,6 +284,7 @@ function Controller(){
     disconnect,
     getMemoryUsage,
     sendCommand,
+    setName,
     fetchData,
     getDeviceName: () => connection.localName,
     isConnected: () => !!connection,

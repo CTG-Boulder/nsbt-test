@@ -2,34 +2,47 @@
   <Page>
     <ActionBar :title="`Connected to ${deviceName}`" />
     <StackLayout class="main">
-      <FlexboxLayout class="buttons" orientation="horizontal">
-        <Button flexGrow="1" text="Refresh" @tap="fetchData" />
-        <Button flexGrow="1" class="btn-red" text="Disconnect" @tap="disconnect" />
-      </FlexboxLayout>
-
-      <Label :text="`Uptime: ${uptimeText}`" />
-
-      <Label :text="`Memory used: ${memoryUsage} blocks`" />
-
-      <StackLayout orientation="horizontal">
-        <Label verticalAlignment="center" :text="`Recording Encounters?: ${flashWriteText}`" />
-        <!-- <Switch :checked="flashWrite === 1" @checkedChange="toggleFlash"/> -->
+      <StackLayout v-show="doingRename" >
+        <Label text="New name:" />
+        <TextField v-model="newDeviceName" maxLength="8" @returnPress="renameDevice"/>
+        <FlexboxLayout class="buttons" orientation="horizontal">
+          <Button flexGrow="1" text="Cancel" @tap="doingRename = false" />
+          <Button flexGrow="1" class="btn-green" text="Save" @tap="renameDevice" />
+        </FlexboxLayout>
       </StackLayout>
-      <Button v-show="flashWrite === 0" class="btn-green" text="Start Recording Encounters" @tap="toggleFlash" />
-      <Button v-show="flashWrite === 1" class="btn-red" text="Stop Recording" @tap="toggleFlash" />
 
-      <Button v-show="!recordedPrimary && flashWrite === 1" text="I am near someone" @tap="recordPrimary" />
-      <Button v-show="recordedPrimary && flashWrite === 1" class="btn-alone" text="I am alone now" @tap="recordSecondary" />
-      <Label v-show="msg" class="msg" :text="msg" />
+      <StackLayout v-show="!doingRename" >
+        <FlexboxLayout class="buttons" orientation="horizontal">
+          <Button flexGrow="1" text="Refresh" @tap="fetchData" />
+          <Button flexGrow="1" class="btn-red" text="Disconnect" @tap="disconnect" />
+        </FlexboxLayout>
 
-      <ActivityIndicator :busy="busy" />
-      <StackLayout class="divider" />
+        <Label :text="`Uptime: ${uptimeText}`" />
 
-      <Button v-show="!progress" text="Save Data File" isEnabled="true" @tap="saveDataFile" />
-      <Button v-show="progress" text="Cancel" isEnabled="true" @tap="cancelDataFetch" />
-      <StackLayout v-show="progress" class="pad">
-        <Label class="msg" text="Downloading" />
-        <Progress :value="progress" />
+        <Label :text="`Memory used: ${memoryUsage} blocks`" />
+
+        <StackLayout orientation="horizontal">
+          <Label verticalAlignment="center" :text="`Recording Encounters?: ${flashWriteText}`" />
+          <!-- <Switch :checked="flashWrite === 1" @checkedChange="toggleFlash"/> -->
+        </StackLayout>
+        <Button v-show="flashWrite === 0" class="btn-green" text="Start Recording Encounters" @tap="toggleFlash" />
+        <Button v-show="flashWrite === 1" class="btn-red" text="Stop Recording" @tap="toggleFlash" />
+
+        <Button v-show="!recordedPrimary && flashWrite === 1" text="I am near someone" @tap="recordPrimary" />
+        <Button v-show="recordedPrimary && flashWrite === 1" class="btn-alone" text="I am alone now" @tap="recordSecondary" />
+
+        <Label v-show="msg" class="msg" :text="msg" />
+        <ActivityIndicator :busy="busy" />
+        <StackLayout class="divider" />
+
+        <Button v-show="!doingRename" text="Rename Device" @tap="doingRename = true" />
+
+        <Button v-show="!progress" text="Save Data File" isEnabled="true" @tap="saveDataFile" />
+        <Button v-show="progress" text="Cancel" isEnabled="true" @tap="cancelDataFetch" />
+        <StackLayout v-show="progress" class="pad">
+          <Label class="msg" text="Downloading" />
+          <Progress :value="progress" />
+        </StackLayout>
       </StackLayout>
 
       <!-- <HtmlView :html="`<pre>${JSON.stringify(memoryUsage, null, 4)}</pre>`" /> -->
@@ -61,9 +74,11 @@ export default {
     return {
       busy: false,
       progress: 0,
+      doingRename: false,
       connected: false,
       recordedPrimary: false,
       deviceName: '',
+      newDeviceName: '',
       memoryUsage: 'unknown',
       flashWrite: 'unknown',
       uptime: 0,
@@ -137,6 +152,14 @@ export default {
       await this.checkFlashUsage()
       await this.getMemoryUsage()
       await this.getUptime()
+    },
+
+    async renameDevice(){
+      let name = this.newDeviceName
+      await this.$dongle.setName(name)
+      this.doingRename = false
+      this.deviceName = this.newDeviceName
+      this.feedback('Renamed to ' + name)
     },
 
     getMemoryUsage(){

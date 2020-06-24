@@ -26,6 +26,10 @@ export const COMMANDS = Object.freeze({
     value: 's',
     returnType: Uint8Array
   },
+  setName: {
+    value: 'N',
+    returnType: Uint8Array
+  },
   recordPrimaryEncounterEvent: {
     value: 'M',
     returnType: Uint8Array
