@@ -69,4 +69,7 @@ export default {
 </script>
 
 <style scoped>
+Label {
+  padding: 20;
+}
 </style>
