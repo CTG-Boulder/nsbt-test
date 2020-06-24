@@ -47,5 +47,7 @@
 	<string>UIStatusBarStyleLightContent</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+  <key>NSBluetoothAlwaysUsageDescription</key>
+  <string>Connect to encounter tracing dongles</string>
 </dict>
 </plist>
