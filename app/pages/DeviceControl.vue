@@ -35,7 +35,7 @@
         <ActivityIndicator :busy="busy" />
         <StackLayout class="divider" />
 
-        <Button v-show="!doingRename" text="Rename Device" @tap="doingRename = true" />
+        <Button v-show="!doingRename" text="Rename Device" isEnabled="false" @tap="doingRename = true" />
 
         <Button v-show="!progress" text="Save Data File" isEnabled="true" @tap="saveDataFile" />
         <Button v-show="progress" text="Cancel" isEnabled="true" @tap="cancelDataFetch" />

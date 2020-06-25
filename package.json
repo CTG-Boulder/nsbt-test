@@ -1,6 +1,6 @@
 {
   "name": "nsbt-test",
-  "version": "1.0.0",
+  "version": "0.5.0",
   "description": "A native application built with NativeScript-Vue",
   "author": "Jasper <well.caffeinated@gmail.com>",
   "license": "MIT",
