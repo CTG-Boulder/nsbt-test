@@ -13,7 +13,7 @@ function getFolder(){
 const dest = getFolder()
 
 export function saveData(deviceName, binData){
-  if (!platformModule.isAndroid()){
+  if (!platformModule.isAndroid){
     return Promise.reject(new Error('Not available on ios yet'))
   }
 
@@ -40,7 +40,7 @@ export function saveData(deviceName, binData){
 }
 
 export function saveTextData(deviceName, text, extension = 'txt') {
-  if (!platformModule.isAndroid()) {
+  if (!platformModule.isAndroid) {
     return Promise.reject(new Error('Not available on ios yet'))
   }
 
