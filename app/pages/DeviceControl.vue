@@ -35,6 +35,7 @@
         <ActivityIndicator :busy="busy" />
         <StackLayout class="divider" />
 
+        <Button v-show="flashWrite === 0" class="btn-green" text="erase flash" @tap="eraseFlash" />
         <Button v-show="!doingRename" text="Rename Device" isEnabled="false" @tap="doingRename = true" />
 
         <Button v-show="!progress" text="Save Data File" isEnabled="true" @tap="saveDataFile" />
@@ -209,6 +210,17 @@ export default {
       return this.$dongle.sendCommand('recordSecondaryEncounterEvent').then(() => {
         this.recordedPrimary = false
         this.feedback('Unset encounter flag in device')
+      })
+      .catch(err => this.onError(err))
+      .finally(() => {
+        this.busy = false
+      })
+    },
+
+    eraseFlash(){
+      this.busy = true
+      return this.$dongle.sendCommand('eraseFlash').then(() => {
+        this.feedback('Erasing flash')
       })
       .catch(err => this.onError(err))
       .finally(() => {
