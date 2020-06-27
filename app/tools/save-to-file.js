@@ -44,7 +44,10 @@ export function saveTextData(deviceName, text, extension = 'txt') {
     return Promise.reject(new Error('Not available on ios yet'))
   }
 
-  const name = deviceName + (new Date()).toISOString().replace(/:/g, '-') + '.' + extension
+  // const name = deviceName + (new Date()).toISOString().replace(/:/g, '-') + '.' + extension
+  const name = deviceName +'_'+
+        (new Date()).toISOString().replace(/:/g, '').replace(/-/g,'').replace(/T/g,'_').split('.') [0] +
+         '.' + extension
   const path = fileSystemModule.path.join(dest, name)
 
   return permissions.requestPermission([
