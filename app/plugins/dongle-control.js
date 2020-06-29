@@ -1,6 +1,7 @@
 import Vue from 'nativescript-vue'
 import { SERVICE_UUID, CHARACTERISTICS, COMMANDS } from '../config'
 import { bluetooth } from './bluetooth-service'
+import sanitize from 'sanitize-filename'
 
 const COMMAND_TIMEOUT = 5000
 const noop = () => {}
@@ -286,7 +287,7 @@ function Controller(){
     sendCommand,
     setName,
     fetchData,
-    getDeviceName: () => connection.localName,
+    getDeviceName: () => sanitize(connection.localName),
     isConnected: () => !!connection,
     on: pubsub.$on.bind(pubsub),
     off: pubsub.$off.bind(pubsub),

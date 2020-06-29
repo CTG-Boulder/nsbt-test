@@ -1,3 +1,5 @@
+import sanitize from 'sanitize-filename'
+
 const platformModule = require("tns-core-modules/platform")
 const permissions = require("nativescript-permissions")
 const fileSystemModule = require("tns-core-modules/file-system")
@@ -17,7 +19,7 @@ export function saveData(deviceName, binData){
     return Promise.reject(new Error('Not available on ios yet'))
   }
 
-  const name = deviceName + (new Date()).toISOString() + '.dat'
+  const name = sanitize(deviceName + (new Date()).toISOString() + '.dat')
   const path = fileSystemModule.path.join(dest, name)
 
   return permissions.requestPermission([
@@ -44,7 +46,8 @@ export function saveTextData(deviceName, text, extension = 'txt') {
     return Promise.reject(new Error('Not available on ios yet'))
   }
 
-  const name = deviceName + (new Date()).toISOString().replace(/:/g, '-') + '.' + extension
+  const date = (new Date()).toISOString()
+  const name = sanitize(`${deviceName}${date}.${extension}`)
   const path = fileSystemModule.path.join(dest, name)
 
   return permissions.requestPermission([

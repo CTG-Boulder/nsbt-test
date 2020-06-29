@@ -25,6 +25,7 @@
     "nativescript-toasty": "^3.0.0-alpha.2",
     "nativescript-vue": "^2.6.1",
     "nativescript-vue-devtools": "^1.4.0",
+    "sanitize-filename": "^1.6.3",
     "tns-core-modules": "^6.5.1"
   },
   "devDependencies": {
