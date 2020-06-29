@@ -45,5 +45,9 @@ export const COMMANDS = Object.freeze({
   stopDataDownload: {
     value: 'F',
     returnType: Uint8Array
+  },
+  eraseFlash: {
+    value: 'C',
+    returnType: Uint8Array
   }
 })

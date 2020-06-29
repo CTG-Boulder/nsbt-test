@@ -1,5 +1,6 @@
 <template>
   <Page>
+  <ScrollView>
     <ActionBar :title="`Connected to ${deviceName}`" />
     <StackLayout class="main">
       <StackLayout v-show="doingRename" >
@@ -35,7 +36,8 @@
         <ActivityIndicator :busy="busy" />
         <StackLayout class="divider" />
 
-        <Button v-show="!doingRename" text="Rename Device" isEnabled="false" @tap="doingRename = true" />
+        <Button v-show="flashWrite === 0" class="btn-red  -rounded-lg" text="erase flash" @tap="eraseFlash" />
+        <Button v-show="!doingRename" text="Rename Device" isHidden="true" isEnabled="false" @tap="doingRename = true" />
 
         <Button v-show="!progress" text="Save Data File" isEnabled="true" @tap="saveDataFile" />
         <Button v-show="progress" text="Cancel" isEnabled="true" @tap="cancelDataFetch" />
@@ -47,6 +49,7 @@
 
       <!-- <HtmlView :html="`<pre>${JSON.stringify(memoryUsage, null, 4)}</pre>`" /> -->
     </StackLayout>
+  </ScrollView>
   </Page>
 </template>
 
@@ -209,6 +212,17 @@ export default {
       return this.$dongle.sendCommand('recordSecondaryEncounterEvent').then(() => {
         this.recordedPrimary = false
         this.feedback('Unset encounter flag in device')
+      })
+      .catch(err => this.onError(err))
+      .finally(() => {
+        this.busy = false
+      })
+    },
+
+    eraseFlash(){
+      this.busy = true
+      return this.$dongle.sendCommand('eraseFlash').then(() => {
+        this.feedback('Erasing flash')
       })
       .catch(err => this.onError(err))
       .finally(() => {

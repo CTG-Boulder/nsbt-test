@@ -51,8 +51,9 @@ export function bytesToCsv(raw) {
     // console.log(row)
     first = row.getUint8(6)
     last = row.getUint8(7)
-    epoch_minute = row.getUint32(8, true)
-    let d = new Date(epoch_minute * 60 * 1000 - 3600 * 6 * 1000)
+    epoch_minute = row.getUint32(8, true);
+    let tz_offset_ms = new Date().getTimezoneOffset() * 60 * 1000;
+    let d = new Date(epoch_minute * 60 * 1000 - tz_offset_ms); // 3600 * 6 * 1000)
     // console.log(d)
     let date_string = d.toISOString()
     date_string = date_string.split('.')
