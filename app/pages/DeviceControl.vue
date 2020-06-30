@@ -40,6 +40,7 @@
         <Button v-show="!doingRename" text="Rename Device" isHidden="true" isEnabled="false" @tap="doingRename = true" />
 
         <Button v-show="!progress" text="Save Data File" isEnabled="true" @tap="saveDataFile" />
+        <Button v-show="!progress" text="Send Data to Server" isEnabled="true" @tap="saveDataToServer" />
         <Button v-show="progress" text="Cancel" isEnabled="true" @tap="cancelDataFetch" />
         <StackLayout v-show="progress" class="pad">
           <Label class="msg" text="Downloading" />
@@ -60,12 +61,12 @@ import { bytesToCsv, parse_binary } from '../tools/bytes-to-csv'
 import { InterruptException } from '../plugins/dongle-control'
 
 function msToTime(s) {
-  var ms = s % 1000
+  let ms = s % 1000
   s = (s - ms) / 1000
-  var secs = s % 60
+  let secs = s % 60
   s = (s - secs) / 60
-  var mins = s % 60
-  var hrs = (s - mins) / 60
+  let mins = s % 60
+  let hrs = (s - mins) / 60
 
   return hrs + 'h ' + mins + 'm ' + secs + '.' + ms + 's'
 }
@@ -249,6 +250,48 @@ export default {
       try {
         let data = await this.$dongle.fetchData(this._dataFetchInterrupt)
         await saveTextData(this.deviceName, bytesToCsv(data), 'csv')
+      } catch (e){
+        if (e instanceof InterruptException){
+          // no action
+        } else {
+          this.onError(e)
+        }
+      } finally {
+        this.progress = 0
+      }
+    },
+
+    async sendCsvToServer(data){
+      let formData = new FormData()
+      let blob = new Blob([data], { type: 'text/csv'})
+      formData.append('dataFile', blob, 'test.txt')
+      let response = await fetch({
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      if (!response.ok){
+        throw new Error('HTTP response was not ok')
+      }
+
+      return response.json()
+    },
+
+    async saveDataToServer(){
+      this.cancelDataFetch()
+      this._dataFetchInterrupt = {
+        interrupt: false,
+        onProgress: (received, expected) => {
+          this.progress = received / expected * 100
+        }
+      }
+
+      try {
+        let data = await this.$dongle.fetchData(this._dataFetchInterrupt)
+        let response = await this.sendCsvToServer(bytesToCsv(data))
       } catch (e){
         if (e instanceof InterruptException){
           // no action

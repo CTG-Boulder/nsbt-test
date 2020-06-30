@@ -5,7 +5,7 @@
   "author": "Jasper <well.caffeinated@gmail.com>",
   "license": "MIT",
   "nativescript": {
-    "id": "com.nativescript.EncounterTracingController",
+    "id": "org.nistet.prototype",
     "templateVersion": "v2",
     "tns-android": {
       "version": "6.5.0"
