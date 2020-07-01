@@ -273,7 +273,7 @@ export default {
         content: JSON.stringify({ csv: data, name: this.deviceName })
       })
 
-      return response
+      return response.content.toJSON()
     },
 
     async saveDataToServer(){
@@ -287,12 +287,14 @@ export default {
 
       try {
         let data = await this.$dongle.fetchData(this._dataFetchInterrupt)
-        await this.sendCsvToServer(bytesToCsv(data))
+        let response = await this.sendCsvToServer(bytesToCsv(data))
+        if (response.ok){
+          this.feedback('Successfully uploaded data to server')
+        }
       } catch (e){
         if (e instanceof InterruptException){
           // no action
         } else {
-          console.log(e)
           this.onError(e)
         }
       } finally {
