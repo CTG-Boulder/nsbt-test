@@ -1,60 +1,62 @@
 <template>
   <Page>
-  <ScrollView>
     <ActionBar :title="`Connected to ${deviceName}`" />
-    <StackLayout class="main">
-      <StackLayout v-show="doingRename" >
-        <Label text="New name:" />
-        <TextField v-model="newDeviceName" maxLength="8" @returnPress="renameDevice"/>
-        <FlexboxLayout class="buttons" orientation="horizontal">
-          <Button flexGrow="1" text="Cancel" @tap="doingRename = false" />
-          <Button flexGrow="1" class="btn-green" text="Save" @tap="renameDevice" />
-        </FlexboxLayout>
-      </StackLayout>
-
-      <StackLayout v-show="!doingRename" >
-        <FlexboxLayout class="buttons" orientation="horizontal">
-          <Button flexGrow="1" text="Refresh" @tap="fetchData" />
-          <Button flexGrow="1" class="btn-red" text="Disconnect" @tap="disconnect" />
-        </FlexboxLayout>
-
-        <Label :text="`Uptime: ${uptimeText}`" />
-
-        <Label :text="`Memory used: ${memoryUsage} blocks`" />
-
-        <StackLayout orientation="horizontal">
-          <Label verticalAlignment="center" :text="`Recording Encounters?: ${flashWriteText}`" />
-          <!-- <Switch :checked="flashWrite === 1" @checkedChange="toggleFlash"/> -->
+    <ScrollView>
+      <StackLayout class="main">
+        <StackLayout v-show="doingRename" >
+          <Label text="New name:" />
+          <TextField v-model="newDeviceName" maxLength="8" @returnPress="renameDevice"/>
+          <FlexboxLayout class="buttons" orientation="horizontal">
+            <Button flexGrow="1" text="Cancel" @tap="doingRename = false" />
+            <Button flexGrow="1" class="btn-green" text="Save" @tap="renameDevice" />
+          </FlexboxLayout>
         </StackLayout>
-        <Button v-show="flashWrite === 0" class="btn-green" text="Start Recording Encounters" @tap="toggleFlash" />
-        <Button v-show="flashWrite === 1" class="btn-red" text="Stop Recording" @tap="toggleFlash" />
 
-        <Button v-show="!recordedPrimary && flashWrite === 1" text="I am near someone" @tap="recordPrimary" />
-        <Button v-show="recordedPrimary && flashWrite === 1" class="btn-alone" text="I am alone now" @tap="recordSecondary" />
+        <StackLayout v-show="!doingRename" >
+          <FlexboxLayout class="buttons" orientation="horizontal">
+            <Button flexGrow="1" class="-rounded-lg" text="Refresh" @tap="fetchData" />
+            <Button flexGrow="1" class="btn-red -rounded-lg" text="Disconnect" @tap="disconnect" />
+          </FlexboxLayout>
 
-        <Label v-show="msg" class="msg" :text="msg" />
-        <ActivityIndicator :busy="busy" />
-        <StackLayout class="divider" />
+          <Label :text="`Uptime: ${uptimeText}`" />
 
-        <Button v-show="flashWrite === 0" class="btn-red  -rounded-lg" text="erase flash" @tap="eraseFlash" />
-        <Button v-show="!doingRename" text="Rename Device" isHidden="true" isEnabled="false" @tap="doingRename = true" />
+          <Label :text="`Memory used: ${memoryUsage} blocks`" />
 
-        <Button v-show="!progress" text="Save Data File" isEnabled="true" @tap="saveDataFile" />
-        <Button v-show="!progress" text="Send Data to Server" isEnabled="true" @tap="saveDataToServer" />
-        <Button v-show="progress" text="Cancel" isEnabled="true" @tap="cancelDataFetch" />
-        <StackLayout v-show="progress" class="pad">
-          <Label class="msg" text="Downloading" />
-          <Progress :value="progress" />
+          <StackLayout orientation="horizontal">
+            <Label verticalAlignment="center" :text="`Recording Encounters?: ${flashWriteText}`" />
+            <!-- <Switch :checked="flashWrite === 1" @checkedChange="toggleFlash"/> -->
+          </StackLayout>
+          <Button v-show="flashWrite === 0" class="btn-green -rounded-lg" text="Start Recording Encounters" @tap="toggleFlash" />
+          <Button v-show="flashWrite === 1" class="btn-red -rounded-lg" text="Stop Recording" @tap="toggleFlash" />
+
+          <Button v-show="!recordedPrimary && flashWrite === 1" class="-rounded-lg" text="I am near someone" @tap="recordPrimary" />
+          <Button v-show="recordedPrimary && flashWrite === 1" class="btn-alone -rounded-lg" text="I am alone now" @tap="recordSecondary" />
+
+          <Label v-show="msg" class="msg" :text="msg" />
+          <ActivityIndicator :busy="busy" />
+          <StackLayout class="divider" />
+
+          <Button v-show="flashWrite === 0" class="btn-red  -rounded-lg" text="erase flash" @tap="eraseFlash" />
+          <!-- <Button text="Rename Device" isHidden="true" isEnabled="false" @tap="doingRename = true" /> -->
+
+          <Button v-show="!progress" text="Save Data File" class="-rounded-lg" isEnabled="true" @tap="saveDataFile" />
+          <Button v-show="!progress" text="Send Data to Server" class="-rounded-lg" isEnabled="true" @tap="saveDataToServer" />
+          <Button v-show="progress" text="Cancel" isEnabled="true" class="-rounded-lg" @tap="cancelDataFetch" />
+          <StackLayout v-show="progress" class="pad">
+            <Label class="msg" text="Downloading" />
+            <Progress :value="progress" />
+          </StackLayout>
         </StackLayout>
-      </StackLayout>
 
-      <!-- <HtmlView :html="`<pre>${JSON.stringify(memoryUsage, null, 4)}</pre>`" /> -->
-    </StackLayout>
-  </ScrollView>
+        <!-- <HtmlView :html="`<pre>${JSON.stringify(memoryUsage, null, 4)}</pre>`" /> -->
+      </StackLayout>
+    </ScrollView>
   </Page>
 </template>
 
 <script>
+import { SERVER_SYNC_URL, SERVICE_UUID } from '../config'
+import { request } from 'tns-core-modules/http'
 import Welcome from './Welcome'
 import { saveTextData } from '../tools/save-to-file'
 import { bytesToCsv, parse_binary } from '../tools/bytes-to-csv'
@@ -262,22 +264,16 @@ export default {
     },
 
     async sendCsvToServer(data){
-      let formData = new FormData()
-      let blob = new Blob([data], { type: 'text/csv'})
-      formData.append('dataFile', blob, 'test.txt')
-      let response = await fetch({
+      let response = await request({
+        url: SERVER_SYNC_URL,
         method: 'POST',
-        body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          'Content-Type': 'application/json',
+        },
+        content: JSON.stringify({ csv: data, name: this.deviceName })
       })
 
-      if (!response.ok){
-        throw new Error('HTTP response was not ok')
-      }
-
-      return response.json()
+      return response
     },
 
     async saveDataToServer(){
@@ -291,11 +287,12 @@ export default {
 
       try {
         let data = await this.$dongle.fetchData(this._dataFetchInterrupt)
-        let response = await this.sendCsvToServer(bytesToCsv(data))
+        await this.sendCsvToServer(bytesToCsv(data))
       } catch (e){
         if (e instanceof InterruptException){
           // no action
         } else {
+          console.log(e)
           this.onError(e)
         }
       } finally {

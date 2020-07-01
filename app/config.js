@@ -1,3 +1,4 @@
+export const SERVER_SYNC_URL = 'http://68.183.130.247:8000/upload'
 export const SERVICE_UUID = '7b183224-9168-443e-a927-7aeea07e8105'
 
 export const CHARACTERISTICS = Object.freeze({
