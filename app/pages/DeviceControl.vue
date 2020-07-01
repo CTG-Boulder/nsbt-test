@@ -177,7 +177,8 @@ export default {
 
     checkFlashUsage(){
       return this.$dongle.sendCommand('isWritingToFlash').then((used) => {
-        this.flashWrite = used[0]
+        this.flashWrite = used[0] & 0x01
+        this.recordedPrimary = (used[0] & 0x02) === 2
       })
       .catch(err => this.onError(err))
     },
