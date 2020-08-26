@@ -1,4 +1,84 @@
+import StructSchema from './struct-schema'
+
 const BLOCK_SIZE = 32 // bytes
+
+const chData = new StructSchema([
+  {
+    key: 'mean',
+    type: 'uint8',
+    littleEndian: true
+  },
+  {
+    key: 'n',
+    type: 'uint8',
+    littleEndian: true
+  },
+  {
+    key: 'min',
+    type: 'uint8',
+    littleEndian: true
+  },
+  {
+    key: 'max',
+    type: 'uint8',
+    littleEndian: true
+  },
+  {
+    key: 'var',
+    type: 'uint16',
+    littleEndian: true
+  },
+])
+
+const encounterRecord = new StructSchema([
+  {
+    key: 'mac',
+    type: 'uint8',
+    length: 6,
+    littleEndian: true
+  },
+  {
+    key: 'first_time',
+    type: 'uint8',
+    length: 1,
+    littleEndian: true
+  },
+  {
+    key: 'last_time',
+    type: 'uint8',
+    length: 1,
+    littleEndian: true
+  },
+  {
+    key: 'minute',
+    type: 'uint32',
+    length: 1,
+    littleEndian: true
+  },
+  {
+    key: 'public_key',
+    type: 'uint8',
+    length: 32,
+    littleEndian: true
+  },
+  {
+    key: 'rssi_data',
+    type: chData,
+    length: 3
+  },
+  {
+    key: 'flag',
+    type: 'uint8',
+    length: 1,
+    littleEndian: true
+  },
+  {
+    key: 'flag2',
+    type: 'uint8',
+    length: 1,
+    littleEndian: true
+  }
+])
 
 function convertToCsv(data) {
   return JSON.stringify(data)
@@ -17,57 +97,34 @@ function data2hex(uint8array) {
   return Array.prototype.map.call(uint8array, x => ('00' + x.toString(16)).slice(-2)).join('');
 }
 
-function getDataFromView(arrayView){
-  let first, last, epoch_minute, id, flag, flag2
-  let mean37, n37, min37, max37, std237
-  let mean38, n38, min38, max38, std238
-  let mean39, n39, min39, max39, std239
 
-  first = arrayView.getUint8(6)
-  last = arrayView.getUint8(7)
-  epoch_minute = arrayView.getUint32(8, true);
+function getDataFromView(arrayView) {
+  let parsed = encounterRecord.read(arrayView)
+
   let tz_offset_ms = new Date().getTimezoneOffset() * 60 * 1000;
-  let d = new Date(epoch_minute * 60 * 1000 - tz_offset_ms) // 3600 * 6 * 1000)
-  // console.log(d)
+  let d = new Date(parsed.minute * 60 * 1000 - tz_offset_ms) // 3600 * 6 * 1000)
   let date_string = d.toISOString()
   date_string = date_string.split('.')
   date_string = date_string[0]
-  id = new Uint8Array(arrayView.buffer, 12, BLOCK_SIZE) //arrayView.buffer.slice(12, 12 + 32)
-  // console.log(id)
-  id = data2hex(id)
-  // console.log(id)
 
-  let offset = 44
-  mean37 = arrayView.getUint8(offset)
-  n37 = arrayView.getUint8(offset + 1)
-  min37 = arrayView.getUint8(offset + 2)
-  max37 = arrayView.getUint8(offset + 3)
-  std237 = arrayView.getUint16(offset + 4, true)
+  let id = data2hex(parsed.public_key)
 
-  offset = 50
-  mean38 = arrayView.getUint8(offset)
-  n38 = arrayView.getUint8(offset + 1)
-  min38 = arrayView.getUint8(offset + 2)
-  max38 = arrayView.getUint8(offset + 3)
-  std238 = arrayView.getUint16(offset + 4, true)
+  let rssi = Math.min(...parsed.rssi_data.map(e => e.mean))
 
-  offset = 56
-  mean39 = arrayView.getUint8(offset)
-  n39 = arrayView.getUint8(offset + 1)
-  min39 = arrayView.getUint8(offset + 2)
-  max39 = arrayView.getUint8(offset + 3)
-  std239 = arrayView.getUint16(offset + 4, true)
-  flag = arrayView.getUint8(62)
-  flag2 = arrayView.getUint8(63)
-
-  let rssi = Math.min(mean37, mean38, mean39)
+  let [mean37, n37, min37, max37, std237] = [parsed.rssi_data[0].mean, parsed.rssi_data[0].n, parsed.rssi_data[0].min, parsed.rssi_data[0].max, parsed.rssi_data[0].var]
+  let [mean38, n38, min38, max38, std238] = [parsed.rssi_data[1].mean, parsed.rssi_data[1].n, parsed.rssi_data[1].min, parsed.rssi_data[1].max, parsed.rssi_data[1].var]
+  let [mean39, n39, min39, max39, std239] = [parsed.rssi_data[2].mean, parsed.rssi_data[2].n, parsed.rssi_data[2].min, parsed.rssi_data[2].max, parsed.rssi_data[2].var]
 
   return {
-    date_string, epoch_minute, first, last,
+    date_string,
+    epoch_minute: parsed.minute,
+    first: parsed.first_time,
+    last: parsed.last_time,
     mean37, n37, min37, max37, std237,
     mean38, n38, min38, max38, std238,
     mean39, n39, min39, max39, std239,
-    flag, flag2, id, rssi
+    flag: parsed.flag, flag2: parsed.flag2,
+    id, rssi
   }
 }
 
