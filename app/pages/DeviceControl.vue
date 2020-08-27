@@ -59,7 +59,7 @@ import { SERVER_SYNC_URL, SERVICE_UUID } from '../config'
 import { request } from 'tns-core-modules/http'
 import Welcome from './Welcome'
 import { saveTextData } from '../tools/save-to-file'
-import { bytesToCsv, parse_binary } from '../tools/bytes-to-csv'
+import { bytesToData, bytesToCsv, parse_binary } from '../tools/bytes-to-csv'
 import { InterruptException } from '../plugins/dongle-control'
 
 function msToTime(s) {
@@ -264,17 +264,39 @@ export default {
       }
     },
 
-    async sendCsvToServer(data){
-      let response = await request({
-        url: SERVER_SYNC_URL,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        content: JSON.stringify({ csv: data, name: this.deviceName })
+    async sendDataToServer(data){
+      let encounters = data.map(d => {
+        return {
+          clientKey: d.clientKey,
+          timestamp: d.timestamp,
+          _meta: d
+        }
       })
 
-      return response.content.toJSON()
+      const batchLength = 50
+      const batches = []
+      for (let i = 0, l = encounters.length; i < l; i++){
+        let b = Math.floor(i / batchLength)
+        let batch = batches[b] = batches[b] || []
+        batch.push(encounters[i])
+      }
+
+      for (let batch of batches){
+        let response = await request({
+          url: SERVER_SYNC_URL,
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          content: JSON.stringify({ encounters: batch })
+        })
+
+        let res = response.content.toJSON()
+        if (res.errors.length){
+          throw new Error('Server Error: ' + res.errors[0].message)
+        }
+      }
+
     },
 
     async saveDataToServer(){
@@ -288,10 +310,8 @@ export default {
 
       try {
         let data = await this.$dongle.fetchData(this._dataFetchInterrupt)
-        let response = await this.sendCsvToServer(bytesToCsv(data))
-        if (response.ok){
-          this.feedback('Successfully uploaded data to server')
-        }
+        await this.sendDataToServer(bytesToData(data))
+        this.feedback('Successfully uploaded data to server')
       } catch (e){
         if (e instanceof InterruptException){
           // no action
