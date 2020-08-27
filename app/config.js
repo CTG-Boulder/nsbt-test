@@ -1,4 +1,4 @@
-export const SERVER_SYNC_URL = 'http://68.183.130.247:8000/encounters/debug'
+export const SERVER_SYNC_URL = 'http://68.183.130.247:8000/api/encounters/debug'
 // export const SERVER_SYNC_URL = 'http://192.168.1.226:8000/api/encounters/debug'
 export const SERVICE_UUID = '7b183224-9168-443e-a927-7aeea07e8105'
 
