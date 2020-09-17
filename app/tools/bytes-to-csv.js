@@ -1,31 +1,35 @@
+import _toPairs from 'lodash/toPairs'
+import _isObject from 'lodash/isObject'
+import _startCase from 'lodash/startCase'
+import _get from 'lodash/get'
 import StructSchema from './struct-schema'
 
 const BLOCK_SIZE = 32 // bytes
 
-const chData = new StructSchema([
+const uSound = new StructSchema([
   {
-    key: 'mean',
-    type: 'uint8',
+    key: 'left',
+    type: 'uint16',
+    littleEndian: true
+  },
+  {
+    key: 'left_iqr',
+    type: 'uint16',
+    littleEndian: true
+  },
+  {
+    key: 'right',
+    type: 'uint16',
+    littleEndian: true
+  },
+  {
+    key: 'right_iqr',
+    type: 'uint16',
     littleEndian: true
   },
   {
     key: 'n',
     type: 'uint8',
-    littleEndian: true
-  },
-  {
-    key: 'min',
-    type: 'uint8',
-    littleEndian: true
-  },
-  {
-    key: 'max',
-    type: 'uint8',
-    littleEndian: true
-  },
-  {
-    key: 'var',
-    type: 'uint16',
     littleEndian: true
   },
 ])
@@ -38,44 +42,32 @@ const encounterRecord = new StructSchema([
     littleEndian: true
   },
   {
-    key: 'first_time',
-    type: 'uint8',
-    length: 1,
-    littleEndian: true
-  },
-  {
-    key: 'last_time',
-    type: 'uint8',
-    length: 1,
-    littleEndian: true
-  },
-  {
     key: 'minute',
     type: 'uint32',
     length: 1,
     littleEndian: true
   },
   {
+    key: 'version',
+    type: 'uint8',
+    length: 1,
+    littleEndian: true
+  },
+  {
+    key: 'usound_data',
+    type: uSound,
+    length: 1,
+    littleEndian: true
+  },
+  {
+    key: 'rssi_values',
+    type: 'int8',
+    length: 12
+  },
+  {
     key: 'public_key',
     type: 'uint8',
     length: 32,
-    littleEndian: true
-  },
-  {
-    key: 'rssi_data',
-    type: chData,
-    length: 3
-  },
-  {
-    key: 'flag',
-    type: 'uint8',
-    length: 1,
-    littleEndian: true
-  },
-  {
-    key: 'flag2',
-    type: 'uint8',
-    length: 1,
     littleEndian: true
   }
 ])
@@ -167,29 +159,27 @@ export function bytesToData(raw){
   return data.filter(entry => entry.flag === 7)
 }
 
+function getPaths(obj){
+  return _toPairs(obj).reduce((ret, [key, value]) => {
+    if (_isObject(value)) {
+      return ret.concat(getPaths(obj).map(k => key + '.' + k))
+    }
+
+    ret.push(key)
+    return ret
+  }, [])
+}
+
 export function bytesToCsv(raw) {
   // Should check that last_mark is < numBlocks
-  let header = [
-    'time', 'epoch_minute', 'first', 'last',
-    'mean37', 'n37', 'min37', 'max37', 'var37',
-    'mean38', 'n38', 'min38', 'max38', 'var38',
-    'mean39', 'n39', 'min39', 'max39', 'var39',
-    'flag', 'flag2', 'encounter_id'
-  ]
-
   let data = bytesToData(raw).map(getCSVData)
 
-  let rows = data.map(entry => {
-    return [
-      entry.date_string, entry.epoch_minute, entry.first, entry.last,
-      entry.mean37, entry.n37, entry.min37, entry.max37, entry.std237,
-      entry.mean38, entry.n38, entry.min38, entry.max38, entry.std238,
-      entry.mean39, entry.n39, entry.min39, entry.max39, entry.std239,
-      entry.flag, entry.flag2, entry.id
-    ]
-  })
+  let paths = getPaths(data[0])
+  let header = paths.map(_startCase)
+  let rows = data.map(entry =>
+    paths.map(p => _get(entry, p))
+  )
 
   rows.unshift(header)
-
   return convertToCsv(rows)
 }
