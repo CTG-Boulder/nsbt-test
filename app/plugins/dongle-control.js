@@ -1,7 +1,9 @@
 import Vue from 'nativescript-vue'
-import { SERVICE_UUID, CHARACTERISTICS, COMMANDS } from '../config'
+import { CHARACTERISTICS, COMMANDS } from '../config'
 import { bluetooth } from './bluetooth-service'
 import sanitize from 'sanitize-filename'
+
+const SERVICE_UUID = '7b183224-9168-443e-a927-7aeea07e8105'
 
 const COMMAND_TIMEOUT = 5000
 const noop = () => {}
@@ -109,7 +111,7 @@ function Controller(){
       characteristicUUID: CHARACTERISTICS.count
     })
 
-    let data = new Uint32Array(res.value)
+    let data = new Uint16Array(res.value)
     return data[0]
   }
 
@@ -287,7 +289,7 @@ function Controller(){
     sendCommand,
     setName,
     fetchData,
-    getDeviceName: () => sanitize(connection.localName),
+    getDeviceName: () => sanitize(connection.localName || ''),
     isConnected: () => !!connection,
     on: pubsub.$on.bind(pubsub),
     off: pubsub.$off.bind(pubsub),
