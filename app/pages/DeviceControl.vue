@@ -96,6 +96,7 @@ export default {
     const connected = () => {
       this.connected = true
       this.deviceName = this.$dongle.getDeviceName()
+      this.$dongle.syncClock()
     }
     const disconnected = () => {
       this.connected = false

@@ -152,11 +152,7 @@ export function bytesToData(raw){
     data.push(entry)
   }
 
-  // Add checks before we add to file
-  // 1.. Valid crypto flag==7
-  // 2.. Duration is greater than >30 seconds
-  //
-  return data.filter(entry => entry.flag === 7)
+  return data
 }
 
 function getPaths(obj){

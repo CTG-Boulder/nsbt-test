@@ -1,9 +1,7 @@
 import Vue from 'nativescript-vue'
-import { CHARACTERISTICS, COMMANDS } from '../config'
+import { SERVICE_UUID, CHARACTERISTICS, COMMANDS } from '../config'
 import { bluetooth } from './bluetooth-service'
 import sanitize from 'sanitize-filename'
-
-const SERVICE_UUID = '7b183224-9168-443e-a927-7aeea07e8105'
 
 const COMMAND_TIMEOUT = 5000
 const noop = () => {}
@@ -112,6 +110,7 @@ function Controller(){
     })
 
     let data = new Uint16Array(res.value)
+    // console.log(new Uint8Array(res.value), data)
     return data[0]
   }
 
@@ -183,6 +182,26 @@ function Controller(){
       serviceUUID: SERVICE_UUID,
       characteristicUUID: CHARACTERISTICS.data,
       value: value
+    })
+  }
+
+  async function syncClock(){
+    assertConnection()
+
+    let uptime = await sendCommand('getUptime')
+    let value = new Uint32Array(3)
+
+    value[0] = Math.round((new Date()).getTime() / 1000)
+    value[1] = uptime[0]
+    value[2] = uptime[1]
+
+    await sendCommand('setClock')
+
+    await bluetooth.writeWithoutResponse({
+      peripheralUUID: connection.UUID,
+      serviceUUID: SERVICE_UUID,
+      characteristicUUID: CHARACTERISTICS.data,
+      value: new Uint8Array(value.buffer)
     })
   }
 
@@ -288,6 +307,7 @@ function Controller(){
     getMemoryUsage,
     sendCommand,
     setName,
+    syncClock,
     fetchData,
     getDeviceName: () => sanitize(connection.localName || ''),
     isConnected: () => !!connection,

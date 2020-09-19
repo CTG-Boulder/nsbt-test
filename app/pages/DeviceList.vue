@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import { SERVICE_UUID } from '../config'
+import { BROADCASTED_SERVICE_UUID } from '../config'
 import Welcome from './Welcome'
 import PeripheralList from '../components/PeripheralList'
 import DeviceControl from './DeviceControl'
@@ -25,7 +25,7 @@ export default {
   data() {
     return {
       busy: false,
-      services: [SERVICE_UUID]
+      services: [BROADCASTED_SERVICE_UUID]
     }
   },
   mounted(){

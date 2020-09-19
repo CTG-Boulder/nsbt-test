@@ -1,6 +1,7 @@
 export const SERVER_SYNC_URL = 'http://68.183.130.247:8000/api/encounters/debug'
 // export const SERVER_SYNC_URL = 'http://192.168.1.226:8000/api/encounters/debug'
-export const SERVICE_UUID = 'fd6f' //'7b183224-9168-443e-a927-7aeea07e8105'
+export const SERVICE_UUID = '7b183224-9168-443e-a927-7aeea07e8105'
+export const BROADCASTED_SERVICE_UUID = 'fd6f'
 
 export const CHARACTERISTICS = Object.freeze({
   count: '292bd3d2-14ff-45ed-9343-55d125edb721',
@@ -19,6 +20,10 @@ export const COMMANDS = Object.freeze({
     value: 'A',
     notify: true,
     returnType: Uint32Array
+  },
+  setClock: {
+    value: 'O',
+    returnType: Uint8Array
   },
   startWritingToFlash: {
     value: 'w',
